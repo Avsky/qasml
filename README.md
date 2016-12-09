@@ -5,6 +5,7 @@ Simple script eliminating the need to manually run nasm and gcc/ld every time yo
 
 # Usage
 ```
+qasml.py [-hkr] [-c COMPILER] [-l LINKER] [-t TEMPDIRECTORY] INPUTFILE OUTPUTFILE  
 -h   --help           Print this help.  
 -k   --keep-object    Don't remove object file after successful linking.  
 -r   --autorun        Automatically run the program after successful linking.  
