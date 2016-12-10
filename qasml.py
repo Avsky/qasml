@@ -39,7 +39,7 @@ def main(argv):
 
     try:
         opts, args = getopt.gnu_getopt(argv, "hkl:c:t:f:r",
-                                       ["help", "keep-compiled-file", "linker=", "compiler=", "temp-dir=", "format=", "autorun"])
+                                       ["help", "keep-cfile", "linker=", "compiler=", "temp-dir=", "format=", "autorun"])
     except getopt.GetoptError as err:
         print(err)
         sys.exit(2)
@@ -48,7 +48,7 @@ def main(argv):
         if o in ("-h", "--help"):
             usage()
             sys.exit(0)
-        elif o in ("-k", "--keep-compiled-file"):
+        elif o in ("-k", "--keep-cfile"):
             removeObjAfterCompilation = False
         elif o in ("-l", "--linker"):
             asmLinker = a
