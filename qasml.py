@@ -9,8 +9,8 @@ import tempfile
 
 def usage():
     print("Usage: ", end="", flush=True)
-    print(os.path.basename(sys.argv[0]) + " [-hkr] [-c COMPILER] [-l LINKER] [-t TEMPDIRECTORY] INPUTFILE OUTPUTFILE")
-    print("\t-h\t--help\t\t\tPrint this help.\n\t-k\t--keep-object\t\tDon't remove object file after successful linking.\n\t-r\t--autorun\t\tAutomatically run the program after successful linking.\n\t-c\t--compiler\t\tSelect alternative compiler. Defaults to nasm.\n\t-l\t--linker\t\tSelect alternative linker. Defaults to ld.\n\t-t\t--temp-dir\t\tChange where to save the object file if you wish to keep it.")
+    print(os.path.basename(sys.argv[0]) + " [-hkr] [-c COMPILER] [-l LINKER] [-t TEMPDIRECTORY] [-f FORMAT] INPUTFILE OUTPUTFILE")
+    print("\t-h\t--help\t\t\tPrint this help.\n\t-k\t--keep-cfile\tDon't remove compiled file after successful linking.\n\t-r\t--autorun\t\tAutomatically run the program after successful linking.\n\t-c\t--compiler\t\tSelect alternative compiler. Defaults to nasm.\n\t-l\t--linker\t\tSelect alternative linker. Defaults to ld.\n\t-t\t--temp-dir\t\tChange where to save the object file if you wish to keep it.\n\t-f\t--format\t\tChange the target format. Defaults to ELF on Unix, Win32/64 on Windows and BIN on unrecognized OSes.")
 
 
 def main(argv):
@@ -21,15 +21,25 @@ def main(argv):
     removeObjAfterCompilation = True
     outputFile = ''
     runAfterwards = False
-    arch = None
-    if platform.machine() == "x86_64":
-        arch = "elf64"
+    asmFormat = None
+    if platform.os.name == 'posix':
+        if platform.machine() == "x86_64":
+            asmFormat = "elf64"
+        else:
+            asmFormat = "elf32"
+    elif platform.os.name == 'nt':
+        if platform.machine() == "x86_64":
+            asmFormat = "win64"
+        else:
+            asmFormat = "win32"
     else:
-        arch = "elf32"
+        print("Warning: Couldn't recognize host OS. Make sure the format is correct.")
+        asmFormat = "bin"
+
 
     try:
-        opts, args = getopt.gnu_getopt(argv, "hkl:c:t:r",
-                                       ["help", "keep-object", "linker=", "compiler=", "temp-dir=", "autorun"])
+        opts, args = getopt.gnu_getopt(argv, "hkl:c:t:f:r",
+                                       ["help", "keep-compiled-file", "linker=", "compiler=", "temp-dir=", "format=", "autorun"])
     except getopt.GetoptError as err:
         print(err)
         sys.exit(2)
@@ -38,7 +48,7 @@ def main(argv):
         if o in ("-h", "--help"):
             usage()
             sys.exit(0)
-        elif o in ("-k", "--keep-object"):
+        elif o in ("-k", "--keep-compiled-file"):
             removeObjAfterCompilation = False
         elif o in ("-l", "--linker"):
             asmLinker = a
@@ -52,6 +62,8 @@ def main(argv):
                 sys.exit(2)
         elif o in ("-r", "--autorun"):
             runAfterwards = True
+        elif o in ("-f", "--format"):
+            asmFormat = a
         else:
             assert False, "unhandled option"
 
@@ -64,7 +76,7 @@ def main(argv):
         if os.path.isfile(asmFile):
             objectPath = os.path.abspath(tmpDir) + "/qasml-" + os.path.basename(outputFile) + ".o"
             # print("Compiling {0} with {1}, linking to {2} with {3}.".format(asmFile, asmHandler, outputFile, asmLinker))
-            buildCommand = [asmHandler, asmFile, "-f", arch, "-o", objectPath]
+            buildCommand = [asmHandler, asmFile, "-f", asmFormat, "-o", objectPath]
             print("Running: " + " ".join(buildCommand))
 
             if subprocess.call(buildCommand) != 0:
